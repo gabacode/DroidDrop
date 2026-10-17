@@ -15,6 +15,13 @@
   <img src="https://img.shields.io/badge/license-WTFPL-brightgreen" alt="License: WTFPL">
 </p>
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
+    <img src="docs/screenshot-light.png" alt="DroidDrop showing the Download folder of an Android phone, with an upload in progress">
+  </picture>
+</p>
+
 ---
 
 ## Why
