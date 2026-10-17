@@ -1,0 +1,43 @@
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, like 1.0. Leave empty to only build the DMG."
+        required: false
+        default: ""
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build DMG
+        id: dmg
+        run: |
+          if [ -n "$RELEASE_VERSION" ]; then
+            make dmg VERSION="${RELEASE_VERSION#v}"
+          else
+            make dmg
+          fi
+          echo "path=$(ls build/DroidDrop-*.dmg)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          path: ${{ steps.dmg.outputs.path }}
+          archive: false
+
+      - name: Publish release
+        if: inputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DMG: ${{ steps.dmg.outputs.path }}
+        run: |
+          TAG="v${RELEASE_VERSION#v}"
+          gh release create "$TAG" "$DMG" --target "$GITHUB_SHA" --title "DroidDrop $TAG" --generate-notes

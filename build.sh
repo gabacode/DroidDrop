@@ -1,10 +1,15 @@
 #!/bin/bash
 # Builds build/DroidDrop.app
+# --universal builds for Apple silicon and Intel (needs Xcode). VERSION=x.y sets the app version.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-swift build -c release
-BIN="$(swift build -c release --show-bin-path)/DroidDrop"
+ARGS=(-c release)
+if [ "${1:-}" = "--universal" ]; then
+    ARGS+=(--arch arm64 --arch x86_64)
+fi
+swift build "${ARGS[@]}"
+BIN="$(swift build "${ARGS[@]}" --show-bin-path)/DroidDrop"
 
 if [ ! -f build/AppIcon.icns ]; then
     mkdir -p build/AppIcon.iconset
@@ -22,6 +27,9 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/DroidDrop"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+if [ -n "${VERSION:-}" ]; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist"
+fi
 cp build/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 codesign --force --sign - "$APP"
 

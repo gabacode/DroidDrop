@@ -66,22 +66,40 @@ DroidDrop looks for `adb` in `$ANDROID_HOME`, `~/Library/Android/sdk/platform-to
 3. Plug the device into your Mac. When **"Allow USB debugging?"** appears on the device,
    tick **Always allow from this computer** and tap **Allow**.
 
-### 3. Build and run
+### 3. Install DroidDrop
 
-You'll need Xcode or the Xcode Command Line Tools (Swift 5.10 or later).
+**Download it.** Get the latest `DroidDrop-<version>.dmg` from
+[Releases](https://github.com/gabacode/DroidDrop/releases), open it, and drag DroidDrop onto
+the Applications folder. It runs on Apple silicon and Intel Macs.
+
+DroidDrop isn't notarized by Apple, so macOS blocks the first launch. Try to open it once,
+then go to **System Settings → Privacy & Security** and click **Open Anyway**. You only have
+to do this once.
+
+**Or build it yourself.** You'll need Xcode or the Xcode Command Line Tools (Swift 5.10 or
+later).
 
 ```sh
-git clone <this repo> DroidDrop
+git clone https://github.com/gabacode/DroidDrop.git
 cd DroidDrop
-./build.sh
-open build/DroidDrop.app
+make install
 ```
 
-To keep it around, copy it into your Applications folder:
+This builds the app and copies it to `~/Applications`. Run `make` on its own to list every
+command:
 
-```sh
-cp -R build/DroidDrop.app ~/Applications/
-```
+| Command | What it does |
+| --- | --- |
+| `make build` | Build `build/DroidDrop.app` |
+| `make run` | Build and launch the app |
+| `make install` | Build and copy the app to `~/Applications` (change with `INSTALL_DIR=…`) |
+| `make uninstall` | Remove the installed app |
+| `make universal` | Build `build/DroidDrop.app` for Apple silicon and Intel (needs Xcode) |
+| `make dmg` | Package the universal app, README, and LICENSE into `build/DroidDrop-<version>.dmg` |
+| `make clean` | Delete all build output |
+
+The version comes from `Resources/Info.plist`. To build a different one, pass it in, for
+example `make dmg VERSION=1.2`.
 
 ## Using it
 
@@ -123,14 +141,22 @@ Some implementation details:
 
 `build.sh` compiles a release build with SwiftPM, draws the app icon in code
 ([`Scripts/make-icon.swift`](Scripts/make-icon.swift)), and packages everything into an
-ad-hoc signed `.app` bundle. There's no Xcode project.
+ad-hoc signed `.app` bundle. There's no Xcode project. The `Makefile` wraps `build.sh` and
+packages the disk image.
+
+A [GitHub Actions workflow](.github/workflows/build.yml) builds the DMG when you run it by
+hand: open the **Actions** tab, pick **Build**, and click **Run workflow**. Leave **version**
+empty to get the DMG as a download on the workflow run. Enter a version such as `1.0` to also
+tag the commit `v1.0` and publish a GitHub release with the DMG attached.
 
 ```
 DroidDrop/
+├── .github/workflows/build.yml  # CI: builds the DMG, publishes releases
+├── Makefile                     # build, install, dmg
 ├── Package.swift
-├── build.sh                 # builds build/DroidDrop.app
+├── build.sh                     # builds build/DroidDrop.app
 ├── Resources/Info.plist
-├── Scripts/make-icon.swift  # renders the app icon
+├── Scripts/make-icon.swift      # renders the app icon
 └── Sources/DroidDrop/
     ├── DroidDropApp.swift
     ├── AppModel.swift
